@@ -19,7 +19,7 @@ class Message:
         Returns the JSON message as a string.
     """
     def json_to_str(self):
-        return json.dumps({"uuid": str(self.uuid), "flag": self.flag}) + "\n"
+        return json.dumps({"uuid": str(self.uuid), "flag": self.flag})
 
     """
         Deserializes json to a python object via json.loads.
@@ -162,7 +162,6 @@ class Node:
         server_sock.listen(1)
 
         conn, addr = server_sock.accept()
-        buffer = ""
         with conn:
             while True:
                 data = conn.recv(1024)
@@ -171,14 +170,8 @@ class Node:
                     print(f"Empty byte object received. Client with {addr} has disconnected.\n")
                     break
 
-                buffer += data.decode()
-
-                # Split by new line in the buffer to process the sender's messages.
-                while "\n" in buffer:
-                    line, buffer = buffer.split("\n", 1)
-                    if line.strip():
-                        msg = Message.str_to_json(line)
-                        self.process_msg(msg)
+                msg = Message.str_to_json(data.decode())
+                self.process_msg(msg)                
 
             print(f"Client socket has closed. [Node with ID: {self.node_uuid}] shutting down.") 
                      

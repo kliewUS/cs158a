@@ -32,7 +32,6 @@ Sent: uuid=ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4, flag=0
 Received: uuid=ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4, flag=1, greater, 0
 Leader is ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4.
 Sent: uuid=ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4, flag=1
-
 ```
 
 ## 3rd terminal
