@@ -1,0 +1,9 @@
+Process started with ID: ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4
+Received: uuid=7ca96a97-d503-4d4c-9fa7-228d856db199, flag=0, less, 0
+Ignored message with uuid=7ca96a97-d503-4d4c-9fa7-228d856db199
+Sent: uuid=ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4, flag=0
+Received: uuid=ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4, flag=0, same, 0
+Leader is decided to ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4.
+Sent: uuid=ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4, flag=1
+Received: uuid=ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4, flag=1, same, 1, leader=ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4
+Leader is ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4.
