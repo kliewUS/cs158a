@@ -151,9 +151,6 @@ class Node:
         Start up TCP server and continous listen for any client connections.
         Once a client connection has been accepted, deserialze all incoming messages and process them.
         If client connection has been closed, shut the node of this server.
-
-        Note that we are not using the with keyword on the server and client sockets.
-        That because we don't want to automatically close the connection if we are finished or when we get an error.
     """
     def server(self):
         server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
