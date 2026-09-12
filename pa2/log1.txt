@@ -1,58 +1,7 @@
-Process started with ID: 7ca96a97-d503-4d4c-9fa7-228d856db199
-Sent: uuid=7ca96a97-d503-4d4c-9fa7-228d856db199, flag=0
-Received: uuid=ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4, flag=0, greater, 0
-Sent: uuid=ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4, flag=0
-Received: uuid=ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4, flag=1, greater, 0
-Leader is ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4.
-Sent: uuid=ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4, flag=1
-Process started with ID: 8ecf6237-21c1-49d4-9ef9-23dec167c653
-Sent: uuid=8ecf6237-21c1-49d4-9ef9-23dec167c653, flag=0
-Received: uuid=8ecf6237-21c1-49d4-9ef9-23dec167c653, flag=0, same, 0
-Leader is decided to 8ecf6237-21c1-49d4-9ef9-23dec167c653.
-Sent: uuid=8ecf6237-21c1-49d4-9ef9-23dec167c653, flag=1
-Received: uuid=8ecf6237-21c1-49d4-9ef9-23dec167c653, flag=1, same, 1, leader=8ecf6237-21c1-49d4-9ef9-23dec167c653
-Leader is 8ecf6237-21c1-49d4-9ef9-23dec167c653.
-Process started with ID: 49d1e83a-7f76-4820-b934-95c62d96b1cc
-Sent: uuid=49d1e83a-7f76-4820-b934-95c62d96b1cc, flag=0
-Received: uuid=e158e9ec-f17e-4773-b741-7e47127a46a7, flag=0, greater, 0
-Sent: uuid=e158e9ec-f17e-4773-b741-7e47127a46a7, flag=0
-Received: uuid=e158e9ec-f17e-4773-b741-7e47127a46a7, flag=1, greater, 0
-Leader is e158e9ec-f17e-4773-b741-7e47127a46a7.
-Sent: uuid=e158e9ec-f17e-4773-b741-7e47127a46a7, flag=1
-Process started with ID: 8d56028b-5bc4-451b-9d6c-cbb4c8ac5f12
-Sent: uuid=8d56028b-5bc4-451b-9d6c-cbb4c8ac5f12, flag=0
-Received: uuid=fe66e841-d917-4c34-a05e-ec0a440e4900, flag=0, greater, 0
-Sent: uuid=fe66e841-d917-4c34-a05e-ec0a440e4900, flag=0
-Received: uuid=fe66e841-d917-4c34-a05e-ec0a440e4900, flag=1, greater, 0
-Leader is fe66e841-d917-4c34-a05e-ec0a440e4900.
-Sent: uuid=fe66e841-d917-4c34-a05e-ec0a440e4900, flag=1
-Process started with ID: ca165ce1-3abf-4635-bb93-8b447aa7644f
-Sent: uuid=ca165ce1-3abf-4635-bb93-8b447aa7644f, flag=0
-Process started with ID: bd9af479-d03e-4e32-9519-8eed2f76983a
-Sent: uuid=bd9af479-d03e-4e32-9519-8eed2f76983a, flag=0
-Received: uuid=bd9af479-d03e-4e32-9519-8eed2f76983a, flag=0, same, 0
-Leader is decided to bd9af479-d03e-4e32-9519-8eed2f76983a.
-Sent: uuid=bd9af479-d03e-4e32-9519-8eed2f76983a, flag=1
-Received: uuid=bd9af479-d03e-4e32-9519-8eed2f76983a, flag=1, same, 1, leader=bd9af479-d03e-4e32-9519-8eed2f76983a
-Leader is bd9af479-d03e-4e32-9519-8eed2f76983a.
-Process started with ID: b34e9f78-116a-44c1-808d-1b2625f547db
-Sent: uuid=b34e9f78-116a-44c1-808d-1b2625f547db, flag=0
-Received: uuid=e6b0f460-3568-4f96-9b67-271931e696f0, flag=0, greater, 0
-Sent: uuid=e6b0f460-3568-4f96-9b67-271931e696f0, flag=0
-Received: uuid=e6b0f460-3568-4f96-9b67-271931e696f0, flag=1, greater, 0
-Leader is e6b0f460-3568-4f96-9b67-271931e696f0.
-Sent: uuid=e6b0f460-3568-4f96-9b67-271931e696f0, flag=1
-Process started with ID: c449e7b9-e851-4014-92d0-5de7ba69731c
-Sent: uuid=c449e7b9-e851-4014-92d0-5de7ba69731c, flag=0
-Received: uuid=d8559e71-4303-4433-8c36-06bf339429b2, flag=0, greater, 0
-Sent: uuid=d8559e71-4303-4433-8c36-06bf339429b2, flag=0
-Received: uuid=d8559e71-4303-4433-8c36-06bf339429b2, flag=1, greater, 0
-Leader is d8559e71-4303-4433-8c36-06bf339429b2.
-Sent: uuid=d8559e71-4303-4433-8c36-06bf339429b2, flag=1
-Process started with ID: 4b94447d-35e3-4246-b237-8375dc057a80
-Sent: uuid=4b94447d-35e3-4246-b237-8375dc057a80, flag=0
-Received: uuid=fafdcc16-f909-4a4d-9300-309272c4c61a, flag=0, greater, 0
-Sent: uuid=fafdcc16-f909-4a4d-9300-309272c4c61a, flag=0
-Received: uuid=fafdcc16-f909-4a4d-9300-309272c4c61a, flag=1, greater, 0
-Leader is fafdcc16-f909-4a4d-9300-309272c4c61a.
-Sent: uuid=fafdcc16-f909-4a4d-9300-309272c4c61a, flag=1
+Process started with ID: 2ddc84c3-70f1-4b8b-878d-079dfbfd07f9
+Sent: uuid=2ddc84c3-70f1-4b8b-878d-079dfbfd07f9, flag=0
+Received: uuid=a7f30e9d-d9d4-47dc-b369-76cf92c04ed9, flag=0, greater, 0
+Sent: uuid=a7f30e9d-d9d4-47dc-b369-76cf92c04ed9, flag=0
+Received: uuid=a7f30e9d-d9d4-47dc-b369-76cf92c04ed9, flag=1, greater, 0
+Leader is a7f30e9d-d9d4-47dc-b369-76cf92c04ed9.
+Sent: uuid=a7f30e9d-d9d4-47dc-b369-76cf92c04ed9, flag=1

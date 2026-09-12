@@ -185,10 +185,10 @@ class Node:
     """
     def client(self):
         time.sleep(2) # Comment out for in-class demo.
+        # input("Press Enter when everyone is ready.\n") # Uncomment out for in-class demo.
         while True:
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                # input("Press Enter when everyone is ready.\n") # Uncomment out for in-class demo.
                 sock.connect(self.client_addr)
                 self.client_sock = sock
                 break
