@@ -1,6 +1,7 @@
 # Local Instructions
-To run processes, simply run the python process in each of the three terminals. Execution examples can be found in the following section.
+To run processes, simply go to the pa2 directory and run the python process in each of the three terminals. Execution examples can be found in the following section.
 ```bash
+cd pa2
 python myleprocess.py <process_number: 1 - 3>
 ```
 

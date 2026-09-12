@@ -6,3 +6,9 @@ Sent: uuid=ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4, flag=0
 Received: uuid=ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4, flag=1, greater, 0
 Leader is ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4.
 Sent: uuid=ee75f4fd-07d0-44b9-a7f4-521ce5bac0b4, flag=1
+Process started with ID: 41f322e0-2155-4d46-965c-53574157012a
+Received: uuid=8ecf6237-21c1-49d4-9ef9-23dec167c653, flag=0, greater, 0
+Sent: uuid=8ecf6237-21c1-49d4-9ef9-23dec167c653, flag=0
+Received: uuid=8ecf6237-21c1-49d4-9ef9-23dec167c653, flag=1, greater, 0
+Leader is 8ecf6237-21c1-49d4-9ef9-23dec167c653.
+Sent: uuid=8ecf6237-21c1-49d4-9ef9-23dec167c653, flag=1

@@ -138,7 +138,7 @@ class Node:
                 self.send_msg_client(Message(self.node_uuid, flag=1))
         elif msg.flag == 1:
             # Termination condition. All nodes have been notified of the leader and have stopped sending messages as a result.
-            if msg.uuid == str(self.node_uuid):
+            if uuid.UUID(msg.uuid) == self.node_uuid:
                 self.write_log(f"Leader is {self.leader_id}.")
                 pass
             else:
@@ -233,5 +233,5 @@ if __name__ == "__main__":
     # Specify a node id. Otherwise, defaults to 1.
     node_id = int(sys.argv[1]) if len(sys.argv) > 1 else 1
 
-    node = Node("config.txt", node_id)
+    node = Node("./config.txt", node_id)
     node.startup()
