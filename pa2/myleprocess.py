@@ -149,7 +149,7 @@ class Node:
 
     """
         Start up TCP server and continous listen for any client connections.
-        Once a client connection has been accepted, deserialze all incoming messages and process them.
+        Once a client connection has been accepted, if a message ends with a "}", deserialze the message and process it base on the UUID and flag of the message received.
         If client connection has been closed, shut the node of this server.
     """
     def server(self):
@@ -167,8 +167,13 @@ class Node:
                     print(f"Empty byte object received. Client with {addr} has disconnected.\n")
                     break
 
-                msg = Message.str_to_json(data.decode())
-                self.process_msg(msg)                
+                decoded_data = data.decode()
+
+                # Process the message if the end of decoded message ends with "}"
+                if decoded_data[-1] == "}":
+                    # print("End of message has been found! Processing message.")
+                    msg = Message.str_to_json(decoded_data)
+                    self.process_msg(msg)    
 
             print(f"Client socket has closed. [Node with ID: {self.node_uuid}] shutting down.") 
                      
