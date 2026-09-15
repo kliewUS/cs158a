@@ -1,9 +1,9 @@
-Process started with ID: ffe2a46a-e5cc-4cc6-a211-3b86a43d0447
-Received: uuid=5526f7c9-8aef-4c5b-87b7-9f37f5213f09, flag=0, less, 0
-Ignored message with uuid=5526f7c9-8aef-4c5b-87b7-9f37f5213f09
-Sent: uuid=ffe2a46a-e5cc-4cc6-a211-3b86a43d0447, flag=0
-Received: uuid=ffe2a46a-e5cc-4cc6-a211-3b86a43d0447, flag=0, same, 0
-Leader is decided to ffe2a46a-e5cc-4cc6-a211-3b86a43d0447.
-Sent: uuid=ffe2a46a-e5cc-4cc6-a211-3b86a43d0447, flag=1
-Received: uuid=ffe2a46a-e5cc-4cc6-a211-3b86a43d0447, flag=1, same, 1, leader=ffe2a46a-e5cc-4cc6-a211-3b86a43d0447
-Leader is ffe2a46a-e5cc-4cc6-a211-3b86a43d0447.
+Process started with ID: d29f62ec-274c-48de-99b1-50fb852a7fd0
+Received: uuid=8f59cbdd-ba87-4d88-8bbf-4ae19908d7dc, flag=0, less, 0
+Ignored message with uuid=8f59cbdd-ba87-4d88-8bbf-4ae19908d7dc
+Sent: uuid=d29f62ec-274c-48de-99b1-50fb852a7fd0, flag=0
+Received: uuid=fdc43205-3ddf-4f67-8757-b5d5cb82e6f2, flag=0, greater, 0
+Sent: uuid=fdc43205-3ddf-4f67-8757-b5d5cb82e6f2, flag=0
+Received: uuid=fdc43205-3ddf-4f67-8757-b5d5cb82e6f2, flag=1, greater, 0
+Leader is fdc43205-3ddf-4f67-8757-b5d5cb82e6f2.
+Sent: uuid=fdc43205-3ddf-4f67-8757-b5d5cb82e6f2, flag=1

@@ -22,12 +22,18 @@ class Message:
         return json.dumps({"uuid": str(self.uuid), "flag": self.flag})
 
     """
-        Deserializes json to a python object via json.loads.
+        Deserializes valid JSON to a python object via json.loads.
         Returns a new Message containing the UUID and the flag.
+        Otherwise, returns an empty string if JSON deserializing fails.
     """
     @classmethod
     def str_to_json(cls, json_str):
-        data = json.loads(json_str)
+        try:
+            data = json.loads(json_str)
+        except json.JSONDecodeError as e:
+            print(f"JSON parasing error: {e}")
+            return ""
+
         return cls(data["uuid"], data["flag"])
 
 class Node:
@@ -159,6 +165,7 @@ class Node:
         server_sock.listen(1)
 
         conn, addr = server_sock.accept()
+        buffer = ""
         with conn:
             while True:
                 data = conn.recv(1024)
@@ -167,12 +174,22 @@ class Node:
                     print(f"Empty byte object received. Client with {addr} has disconnected.\n")
                     break
 
-                decoded_data = data.decode()
+                # Buffer to handle partial sends. 
+                buffer += data.decode()
 
-                # Process the message if the end of decoded message ends with "}"
-                if decoded_data[-1] == "}":
+                # Only process the message if the end of decoded message ends with "}"
+                if buffer[-1] == "}":
                     # print("End of message has been found! Processing message.")
-                    msg = Message.str_to_json(decoded_data)
+                    msg = Message.str_to_json(buffer)
+
+                    # Clears buffer for next message.
+                    buffer = ""
+
+                    # If JSON decoding fails (Returns a empty string), discard the message and wait for the next message.
+                    if not msg:
+                        print("Failed to parse the message due to JSON decoding error!")
+                        continue
+                    
                     self.process_msg(msg)    
 
             print(f"Client socket has closed. [Node with ID: {self.node_uuid}] shutting down.") 

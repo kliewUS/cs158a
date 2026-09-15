@@ -1,6 +1,9 @@
-Process started with ID: 602c4acf-2dcc-4840-b74b-8e19f6994769
-Received: uuid=ffe2a46a-e5cc-4cc6-a211-3b86a43d0447, flag=0, greater, 0
-Sent: uuid=ffe2a46a-e5cc-4cc6-a211-3b86a43d0447, flag=0
-Received: uuid=ffe2a46a-e5cc-4cc6-a211-3b86a43d0447, flag=1, greater, 0
-Leader is ffe2a46a-e5cc-4cc6-a211-3b86a43d0447.
-Sent: uuid=ffe2a46a-e5cc-4cc6-a211-3b86a43d0447, flag=1
+Process started with ID: fdc43205-3ddf-4f67-8757-b5d5cb82e6f2
+Received: uuid=d29f62ec-274c-48de-99b1-50fb852a7fd0, flag=0, less, 0
+Ignored message with uuid=d29f62ec-274c-48de-99b1-50fb852a7fd0
+Sent: uuid=fdc43205-3ddf-4f67-8757-b5d5cb82e6f2, flag=0
+Received: uuid=fdc43205-3ddf-4f67-8757-b5d5cb82e6f2, flag=0, same, 0
+Leader is decided to fdc43205-3ddf-4f67-8757-b5d5cb82e6f2.
+Sent: uuid=fdc43205-3ddf-4f67-8757-b5d5cb82e6f2, flag=1
+Received: uuid=fdc43205-3ddf-4f67-8757-b5d5cb82e6f2, flag=1, same, 1, leader=fdc43205-3ddf-4f67-8757-b5d5cb82e6f2
+Leader is fdc43205-3ddf-4f67-8757-b5d5cb82e6f2.

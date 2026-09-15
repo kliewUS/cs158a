@@ -1,7 +1,7 @@
-Process started with ID: 5526f7c9-8aef-4c5b-87b7-9f37f5213f09
-Sent: uuid=5526f7c9-8aef-4c5b-87b7-9f37f5213f09, flag=0
-Received: uuid=ffe2a46a-e5cc-4cc6-a211-3b86a43d0447, flag=0, greater, 0
-Sent: uuid=ffe2a46a-e5cc-4cc6-a211-3b86a43d0447, flag=0
-Received: uuid=ffe2a46a-e5cc-4cc6-a211-3b86a43d0447, flag=1, greater, 0
-Leader is ffe2a46a-e5cc-4cc6-a211-3b86a43d0447.
-Sent: uuid=ffe2a46a-e5cc-4cc6-a211-3b86a43d0447, flag=1
+Process started with ID: 8f59cbdd-ba87-4d88-8bbf-4ae19908d7dc
+Sent: uuid=8f59cbdd-ba87-4d88-8bbf-4ae19908d7dc, flag=0
+Received: uuid=fdc43205-3ddf-4f67-8757-b5d5cb82e6f2, flag=0, greater, 0
+Sent: uuid=fdc43205-3ddf-4f67-8757-b5d5cb82e6f2, flag=0
+Received: uuid=fdc43205-3ddf-4f67-8757-b5d5cb82e6f2, flag=1, greater, 0
+Leader is fdc43205-3ddf-4f67-8757-b5d5cb82e6f2.
+Sent: uuid=fdc43205-3ddf-4f67-8757-b5d5cb82e6f2, flag=1
