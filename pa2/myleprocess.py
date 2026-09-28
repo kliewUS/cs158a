@@ -90,7 +90,7 @@ class Node:
     """
     def send_msg_client(self, msg):
         if self.client_sock:
-            self.client_sock.sendall(msg.json_to_str().encode())
+            self.client_sock.sendall((msg.json_to_str() + "\n").encode())
             self.write_log(f"Sent: uuid={msg.uuid}, flag={msg.flag}")
 
     """
@@ -154,9 +154,27 @@ class Node:
                 self.send_msg_client(msg)
 
     """
-        Start up TCP server and continous listen for any client connections.
+        Basically, grab the closing bracket and set the cutoff to the next opening bracket of the message.
+        If the JSON parsed is valid, then processes the message and read the next message starting from the cutoff.
+        Otherwise, return a blank string.
+    """
+    def parse_msg(self, buffer):
+        end_of_message_pos = buffer.find('}') + 1
+        # print(f"{buffer[:end_of_message_pos]}")
+        clipped_msg = buffer[:end_of_message_pos]
+        buffer = buffer[end_of_message_pos:]
+
+        msg = Message.str_to_json(clipped_msg)
+        if not msg:
+            print(f"Failed to parse the message due to JSON decoding error! Skipping invalid message: {clipped_msg}")
+        else:
+            self.process_msg(msg)        
+        return buffer
+
+    """
+        Start up TCP server and continously listen for any client connections until a client connection is detected.
         Once a client connection has been accepted, if a message ends with a "}", deserialze the message and process it base on the UUID and flag of the message received.
-        If client connection has been closed, shut the node of this server.
+        If client connection has been closed, the server connection will remain open and continously listen until a new client connection is detected, repeating the whole process.
     """
     def server(self):
         server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -164,36 +182,35 @@ class Node:
         server_sock.bind(self.server_addr)
         server_sock.listen(1)
 
-        conn, addr = server_sock.accept()
-        buffer = ""
-        with conn:
-            while True:
-                data = conn.recv(1024)
+        # Server connection remains open even if a client connection gets dropped.
+        while True:
+            try:
+                # print("Awaiting for new connections...")
+                conn, addr = server_sock.accept()
+                buffer = ""
+                print(f"Connection accepted from {addr}.")
+                # buffer = """{"uuid": "e42ed18b-a20b-4f10-92f8-6cf13ddd0b50", "flag": 0} {"uuid": "dcb19804-76c7-473d-95ad-350d176d0245", "flag": 0}"""                
+                with conn:
+                    while True:
+                        data = conn.recv(1024)
+                        if not data:
+                            print(f"Empty byte object received. Client with {addr} has disconnected.\n")
+                            # print(f"Empty byte object received. Ignoring empty object.\n")
+                            break
+                        else:
+                            # Buffer to handle partial sends. 
+                            buffer += data.decode()
+                            # print(f"Current Buffer: {buffer}")
 
-                if not data:
-                    print(f"Empty byte object received. Client with {addr} has disconnected.\n")
-                    break
+                            # Keep looping until the buffer is empty or we received a JSON parasing error.
+                            while '}' in buffer:
+                                buffer = self.parse_msg(buffer)
 
-                # Buffer to handle partial sends. 
-                buffer += data.decode()
-
-                # Only process the message if the end of decoded message ends with "}"
-                if buffer[-1] == "}":
-                    # print("End of message has been found! Processing message.")
-                    msg = Message.str_to_json(buffer)
-
-                    # Clears buffer for next message.
-                    buffer = ""
-
-                    # If JSON decoding fails (Returns a empty string), discard the message and wait for the next message.
-                    if not msg:
-                        print("Failed to parse the message due to JSON decoding error!")
-                        continue
-                    
-                    self.process_msg(msg)    
-
-            print(f"Client socket has closed. [Node with ID: {self.node_uuid}] shutting down.") 
-                     
+                                if not buffer:
+                                    # print("Finished processing messages!")
+                                    break 
+            except socket.error as e:
+                print(f"Socket connection error: {e}")
 
     """
         Waits for 2 seconds and then the node attempts to connect to target IP and port. 

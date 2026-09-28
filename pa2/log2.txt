@@ -1,9 +1,19 @@
-Process started with ID: d29f62ec-274c-48de-99b1-50fb852a7fd0
-Received: uuid=8f59cbdd-ba87-4d88-8bbf-4ae19908d7dc, flag=0, less, 0
-Ignored message with uuid=8f59cbdd-ba87-4d88-8bbf-4ae19908d7dc
-Sent: uuid=d29f62ec-274c-48de-99b1-50fb852a7fd0, flag=0
-Received: uuid=fdc43205-3ddf-4f67-8757-b5d5cb82e6f2, flag=0, greater, 0
-Sent: uuid=fdc43205-3ddf-4f67-8757-b5d5cb82e6f2, flag=0
-Received: uuid=fdc43205-3ddf-4f67-8757-b5d5cb82e6f2, flag=1, greater, 0
-Leader is fdc43205-3ddf-4f67-8757-b5d5cb82e6f2.
-Sent: uuid=fdc43205-3ddf-4f67-8757-b5d5cb82e6f2, flag=1
+Process started with ID: d526d6d4-0995-4404-939d-ba504baa35b6
+Received: uuid=f1a0724f-862d-44a3-ae6e-8fb847c1bba9, flag=0, greater, 0
+Sent: uuid=f1a0724f-862d-44a3-ae6e-8fb847c1bba9, flag=0
+Received: uuid=f1a0724f-862d-44a3-ae6e-8fb847c1bba9, flag=1, greater, 0
+Leader is f1a0724f-862d-44a3-ae6e-8fb847c1bba9.
+Sent: uuid=f1a0724f-862d-44a3-ae6e-8fb847c1bba9, flag=1
+Process started with ID: 0495eccc-ee79-4688-998a-20dce9c19292
+Sent: uuid=0495eccc-ee79-4688-998a-20dce9c19292, flag=0
+Process started with ID: dfafb1db-980e-4499-8ab6-7881db67f3bf
+Received: uuid=09c61a46-be36-40f1-96ab-9fce2dbbea91, flag=0, less, 0
+Ignored message with uuid=09c61a46-be36-40f1-96ab-9fce2dbbea91
+Sent: uuid=dfafb1db-980e-4499-8ab6-7881db67f3bf, flag=0
+Received: uuid=dfafb1db-980e-4499-8ab6-7881db67f3bf, flag=0, same, 0
+Leader is decided to dfafb1db-980e-4499-8ab6-7881db67f3bf.
+Sent: uuid=dfafb1db-980e-4499-8ab6-7881db67f3bf, flag=1
+Received: uuid=dfafb1db-980e-4499-8ab6-7881db67f3bf, flag=1, same, 1, leader=dfafb1db-980e-4499-8ab6-7881db67f3bf
+Leader is dfafb1db-980e-4499-8ab6-7881db67f3bf.
+Received: uuid=46612ebf-fe5a-4d21-8858-9510850ef762, flag=0, less, 1, leader=dfafb1db-980e-4499-8ab6-7881db67f3bf
+Ignored message with uuid=46612ebf-fe5a-4d21-8858-9510850ef762
