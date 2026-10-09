@@ -2,7 +2,7 @@ import time
 
 from p2p_node import p2p_node
 
-# This is a placeholder. Meant to ensure nodes are communicating with each other, disconnecting gracefully. 
+# This is a temporary test. Meant to ensure nodes are communicating and disconnecting with each other. 
 # Feel free to remove or modify this once messaging and/or file mgment is implemented.
 
 node1_recv = []
