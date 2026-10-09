@@ -14,7 +14,7 @@ class p2p_node:
         self.tcp_port = tcp_port
         self.on_message_received = on_message_received
         self.on_peer_disconnected = on_peer_disconnected
-        self.peer_sockets: Dict[str, socket.socket] = {}
+        self.peer_sockets: Dict[str, socket.socket] = {} 
         self.lock = threading.Lock()
         self.running = False 
 
@@ -42,6 +42,7 @@ class p2p_node:
         data = json.dumps(msg).encode()
         udp_socket.sendto(data, ('<broadcast>', UDP_PORT))
 
+        # Might want to check this. This feels very hacky.
         start_time = time.time()
         while time.time() - start_time < 1.5:
             try:
@@ -53,10 +54,8 @@ class p2p_node:
                     print(f"Node {self.id} received Message Type: {ack_msg.get('type')} and connecting to {addr[0]} with tcp_port: {self.tcp_port}")
                     print(f"TCP Port to connect: {tcp_port}")
                     if tcp_port:
-                        self.connect_to_peer(addr[0], tcp_port)
-            except socket.timeout:
-                break
-            except Exception:
+                        self.connect_to_peer(ack_msg.get('id'), addr[0], tcp_port)
+            except (socket.timeout, Exception):
                 break
 
         udp_socket.close()
@@ -103,40 +102,58 @@ class p2p_node:
         while self.running:
             try:
                 conn, addr = tcp_socket.accept()
-                peer_key = f"{addr[0]}:{addr[1]}"
-                print(peer_key)
+                # peer_key = f"{addr[0]}:{addr[1]}"
+                # print(peer_key)
 
-                with self.lock:
-                    self.peer_sockets[peer_key] = conn
+                payload = recv_msg(conn)
+                msg = json.loads(payload.decode())
 
-                client_thread = threading.Thread(target=self.peer_receiver, args=(conn, peer_key), daemon=True)
-                client_thread.start()
-            except Exception as e:
+                if msg.get("type") == "IDENT":
+                    peer_key = msg.get("id")
+
+                    if not peer_key or peer_key == self.id or peer_key in self.peer_sockets:
+                        conn.close()
+                        break
+
+                    with self.lock:
+                        self.peer_sockets[peer_key] = conn
+
+                    client_thread = threading.Thread(target=self.peer_receiver, args=(conn, peer_key), daemon=True)
+                    client_thread.start()
+            except Exception:
                 if not self.running: 
                     break
 
         tcp_socket.close()
 
-    def connect_to_peer(self, ip, port):
-        peer_key = f"{ip}:{port}"
-        print(f"Peer Key: {peer_key}")
+    def connect_to_peer(self, id, ip, port):
+        # peer_key = f"{ip}:{port}"
+        # print(f"Peer Key: {peer_key}")
+        if id == self.id:
+            return False
 
         with self.lock:
-            if peer_key in self.peer_sockets:
+            if id in self.peer_sockets:
                 return False
 
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((ip, port))
 
-            with self.lock:
-                self.peer_sockets[peer_key] = sock
+            msg = {"type": "IDENT", "id": self.id}
+            send_msg(sock, json.dumps(msg).encode())
 
-            client_conn_thread = threading.Thread(target=self.peer_receiver, args=(sock, peer_key), daemon=True)
+            with self.lock:
+                # self.peer_sockets[peer_key] = sock
+                self.peer_sockets[id] = sock
+
+            client_conn_thread = threading.Thread(target=self.peer_receiver, args=(sock, id), daemon=True)
+            # client_conn_thread = threading.Thread(target=self.peer_receiver, args=(sock, peer_key), daemon=True)
             client_conn_thread.start()
 
         except Exception as e:
-            print(f"Failed to connect to {peer_key}: {e}")
+            print(f"Failed to connect to {id}: {e}")
+            # print(f"Failed to connect to {peer_key}: {e}")
 
     def send_message(self, peer_key, msg_dict):
         with self.lock:

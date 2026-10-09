@@ -45,7 +45,7 @@ def run_test():
 
     print("Test Message Delivery")
     test_payload = {
-        "type": "TEST_MSG",
+        "type": "FILE_LIST",
         "fileContent": "Hello world from Node 1"
     }
 
