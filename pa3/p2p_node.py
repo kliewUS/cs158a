@@ -1,10 +1,14 @@
 import socket
 import threading
-import json
 import time
 import uuid
 from typing import Callable, Dict
 from msg_frame import send_msg, recv_msg
+from messages import (
+    MessageError, encode, decode,
+    make_peer_req, make_peer_ack, make_ident,
+    TYPE, ID, TARGET_PORT, PEER_REQ, PEER_ACK, IDENT
+)
 
 UDP_PORT = 54321 # Set default UDP port for all nodes to listen to.
 
@@ -41,36 +45,35 @@ class p2p_node:
 
     """
         Broadcast Peer Request
+            Sends peer request into udp socket
+            checks for replies (1.5s)
     """
     def broadcast_peer_req(self):
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         udp_socket.settimeout(1.5)
 
-        msg = {
-            "id": self.id,
-            "type": "PEER_REQ"
-        }
+        msg = make_peer_req(self.id)
 
         print(f"Node {self.id} sent message: {msg}") 
 
-        data = json.dumps(msg).encode()
-        udp_socket.sendto(data, ('<broadcast>', UDP_PORT))
+        udp_socket.sendto(encode(msg), ('<broadcast>', UDP_PORT))
 
         # Might want to check this. This feels very hacky.
         start_time = time.time()
         while time.time() - start_time < 1.5:
             try:
                 ack_data, addr = udp_socket.recvfrom(4096)
-                ack_msg = json.loads(ack_data.decode())
+                ack_msg = decode(ack_data)
 
-                if ack_msg.get("type") == "PEER_ACK":
-                    tcp_port = ack_msg.get("tcp_port")
-                    print(f"Node {self.id} received Message Type: {ack_msg.get('type')} and connecting to {addr[0]} with tcp_port: {self.tcp_port}")
-                    print(f"TCP Port to connect: {tcp_port}")
-                    if tcp_port:
-                        self.connect_to_peer(ack_msg.get('id'), addr[0], tcp_port)
-            except (socket.timeout, Exception):
+                if ack_msg[TYPE] == PEER_ACK:
+                    tcp_port = ack_msg[TARGET_PORT]
+                    print(f"Node {self.id} received Message Type: {ack_msg[TYPE]} and connecting to {addr[0]} with tcp_port: {tcp_port}")
+                    self.connect_to_peer(ack_msg[ID], addr[0], tcp_port)
+            except MessageError as e:
+                # Ignore a malformed reply and keep waiting for valid ACKs.
+                print(f"Node {self.id} ignored invalid UDP message from {addr[0]}: {e}")
+            except Exception:
                 break
 
         udp_socket.close()
@@ -89,21 +92,19 @@ class p2p_node:
         while self.running:
             try:
                 data, addr = udp_socket.recvfrom(4096)
-                msg = json.loads(data.decode())
+                msg = decode(data)
                 print(f"Node {self.id} received message: {msg}")
 
-                if msg.get("id") == self.id:
+                if msg[ID] == self.id:
                     print(f"Node {self.id} ignores self-broadcast.")
                     continue
 
-                if msg.get("type") == "PEER_REQ":
-                    ack_msg = {
-                        "id": self.id,
-                        "type": "PEER_ACK",
-                        "tcp_port": self.tcp_port
-                    }
-                    print(f"Node {self.id} received Message Type: {msg.get('type')} and sending it to {addr[0]} with tcp_port: {self.tcp_port}")
-                    udp_socket.sendto(json.dumps(ack_msg).encode(), addr)
+                if msg[TYPE] == PEER_REQ:
+                    ack_msg = make_peer_ack(self.id, self.tcp_port)
+                    print(f"Node {self.id} received Message Type: {msg[TYPE]} and sending it to {addr[0]} with tcp_port: {self.tcp_port}")
+                    udp_socket.sendto(encode(ack_msg), addr)
+            except MessageError as e:
+                print(f"Node {self.id} ignored invalid UDP message from {addr[0]}: {e}")
             except Exception:
                 if not self.running: 
                     break
@@ -112,9 +113,8 @@ class p2p_node:
 
     """
         Establishes TCP server at specified port.
-        If message IDENT is received, then retrieve id.
-        Close the connection if the id is already in peer list.
-
+        The first message on each accepted connection must be IDENT, which carries the peer's id.
+        Close the connection if the first message is not IDENT, or the id is already in peer list.
     """
     def tcp_server(self):
         tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -127,21 +127,29 @@ class p2p_node:
             try:
                 conn, addr = tcp_socket.accept()
 
-                payload = recv_msg(conn)
-                msg = json.loads(payload.decode())
+                try:
+                    msg = decode(recv_msg(conn))
+                except (MessageError, ConnectionError, OSError) as e:
+                    print(f"Node {self.id} rejected connection from {addr[0]}: {e}")
+                    conn.close()
+                    continue
 
-                if msg.get("type") == "IDENT":
-                    peer_id = msg.get("id")
+                if msg[TYPE] != IDENT:
+                    print(f"Node {self.id} rejected connection from {addr[0]}: expected IDENT, got {msg[TYPE]}")
+                    conn.close()
+                    continue
 
-                    if not peer_id or peer_id == self.id or peer_id in self.peer_list:
-                        conn.close()
-                        continue # Kinda hacky. Will need to take a look later. Could possibly replace an existing connection.
+                peer_id = msg[ID]
 
-                    with self.lock:
-                        self.peer_list[peer_id] = conn
+                if not peer_id or peer_id == self.id or peer_id in self.peer_list:
+                    conn.close()
+                    continue # Kinda hacky. Will need to take a look later. Could possibly replace an existing connection.
 
-                    client_thread = threading.Thread(target=self.peer_receiver, args=(conn, peer_id), daemon=True)
-                    client_thread.start()
+                with self.lock:
+                    self.peer_list[peer_id] = conn
+
+                client_thread = threading.Thread(target=self.peer_receiver, args=(conn, peer_id), daemon=True)
+                client_thread.start()
             except Exception:
                 if not self.running: 
                     break
@@ -165,8 +173,7 @@ class p2p_node:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((ip, port))
 
-            msg = {"type": "IDENT", "id": self.id}
-            send_msg(sock, json.dumps(msg).encode())
+            send_msg(sock, encode(make_ident(self.id)))
 
             with self.lock:
                 self.peer_list[peer_id] = sock
@@ -179,6 +186,7 @@ class p2p_node:
 
     """
         Get peer_id and sends message to specified peer_id.
+        Returns False if the message could not be sent.
     """
     def send_message(self, peer_id, msg_dict):
         with self.lock:
@@ -188,25 +196,30 @@ class p2p_node:
             return False
 
         try:
-            data = json.dumps(msg_dict).encode()
-            send_msg(sock, data)
+            send_msg(sock, encode(msg_dict))
             return True
+        except ValueError as e:
+            # Message too large to send. The connection itself is fine, so keep the peer.
+            print(f"Failed to send message to {peer_id}: {e}")
+            return False
         except Exception:
             self.handle_disconnect(peer_id)
             return False
 
     """
         Handles and parses message received from peers.
+        Invalid messages are skipped; the connection stays open.
     """
     def peer_receiver(self, sock, peer_id):
         while self.running:
             try:
-                payload = recv_msg(sock)
-                msg_dict = json.loads(payload.decode())
+                msg_dict = decode(recv_msg(sock))
                 self.on_message_received(peer_id, msg_dict)
             except (ConnectionError, OSError):
                 self.handle_disconnect(peer_id)
                 break
+            except MessageError as e:
+                print(f"Ignored invalid message from {peer_id}: {e}")
             except Exception as e:
                 print(f"Failed to parse message from {peer_id}: {e}")
 

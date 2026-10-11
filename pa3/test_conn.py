@@ -1,6 +1,7 @@
 import time
 
 from p2p_node import p2p_node
+from messages import make_file_list, FILE_LIST_FIELD
 
 # This is a temporary test. Meant to ensure nodes are communicating and disconnecting with each other. 
 # Feel free to remove or modify this once messaging and/or file mgment is implemented.
@@ -32,28 +33,25 @@ def run_test():
     node1.broadcast_peer_req()
     time.sleep(2)
 
-    print(f"Node 1 Connected Peers: {list(node1.peer_sockets.keys())}")
-    print(f"Node 2 Connected Peers: {list(node2.peer_sockets.keys())}")
+    print(f"Node 1 Connected Peers: {list(node1.peer_list.keys())}")
+    print(f"Node 2 Connected Peers: {list(node2.peer_list.keys())}")
 
-    if not node1.peer_sockets:
+    if not node1.peer_list:
         print("Test failed: Node 1 failed to connect to Node 2 via TCP.")
         node1.stop()
         node2.stop()
         return
 
-    peer_key_node2 = list(node1.peer_sockets.keys())[0]
+    peer_key_node2 = list(node1.peer_list.keys())[0]
 
     print("Test Message Delivery")
-    test_payload = {
-        "type": "FILE_LIST",
-        "fileContent": "Hello world from Node 1"
-    }
+    test_payload = make_file_list(node1.id, ["hello_from_node1.txt"])
 
     success = node1.send_message(peer_key_node2, test_payload)
     print(f"Send status: {success}")
     time.sleep(1)
 
-    if len(node2_recv) and node2_recv[0][1]["fileContent"] == "Hello world from Node 1":
+    if len(node2_recv) and node2_recv[0][1][FILE_LIST_FIELD] == ["hello_from_node1.txt"]:
         print("Test passed: Message delivered and framed correctly!")
     else:
         print("Test failed: Message was not received properly.")

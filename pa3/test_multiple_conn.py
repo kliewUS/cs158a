@@ -1,5 +1,6 @@
 import time
 from p2p_node import p2p_node
+from messages import make_file_list
 
 # This is a temporary test. Meant to ensure mutliple nodes are communicating and disconnecting with each other.
 # Feel free to remove or modify this once messaging and/or file mgment is implemented.
@@ -48,10 +49,7 @@ def run_multi_node_test():
         print(f"Failed: Expected Node 1 to have {NUM_NODES - 1} peers, got {node1_peers}")
 
     print("Node 1 sending message to all connected peers.")
-    test_payload = {
-        "type": "FILE_LIST",
-        "fileContent": "Hello from Node 1 to all my peers!"
-    }
+    test_payload = make_file_list(nodes[0].id, ["hello_from_node1.txt"])
 
     for peer_id in list(nodes[0].peer_list.keys()):
         nodes[0].send_message(peer_id, test_payload)
