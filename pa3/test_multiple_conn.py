@@ -7,8 +7,10 @@ from messages import make_file_list
 
 NUM_NODES = 5
 STARTING_TCP_PORT = 60001
+PRINT_LINE = "-" * 50
 
 recv_msg = {i: [] for i in range(NUM_NODES)}
+
 
 def msg_callback(idx):
     def callback(peer_key, msg):
@@ -22,7 +24,7 @@ def disconnect_callback(idx):
     return on_disconnect
 
 def run_multi_node_test():
-    print(f"Starting {NUM_NODES}-node network test")
+    print(f"Starting {NUM_NODES}-node network test" + "\n" + PRINT_LINE)
     nodes = []
 
     for i in range(NUM_NODES):
@@ -40,7 +42,7 @@ def run_multi_node_test():
     time.sleep(2)
 
     for i, node in enumerate(nodes):
-        print(f"Node {i + 1} (Port: {node.tcp_port}): {len(node.peer_list)} connected peers(s)")
+        print(f"Node {i + 1} (Port: {node.tcp_port}): {len(node.peer_list)} connected peers(s)" + "\n" + PRINT_LINE)
 
     node1_peers = len(nodes[0].peer_list)
     if node1_peers == NUM_NODES - 1:
@@ -48,7 +50,7 @@ def run_multi_node_test():
     else:
         print(f"Failed: Expected Node 1 to have {NUM_NODES - 1} peers, got {node1_peers}")
 
-    print("Node 1 sending message to all connected peers.")
+    print("Node 1 sending message to all connected peers." + "\n" + PRINT_LINE)
     test_payload = make_file_list(nodes[0].id, ["hello_from_node1.txt"])
 
     for peer_id in list(nodes[0].peer_list.keys()):
@@ -62,18 +64,18 @@ def run_multi_node_test():
     else:
         print("Failed: One or more nodes failed to receive the message.")
 
-    print("Triggering broadcasts from remaining nodes to form full network")
+    print("Triggering broadcasts from remaining nodes to form full network" + "\n" + PRINT_LINE)
     for i in range(1, NUM_NODES):
         nodes[i].broadcast_peer_req()
 
     time.sleep(2)
 
-    print("Total connected peers: ")
+    print("Total connected peers: "  + "\n" + PRINT_LINE)
     for i, node in enumerate(nodes):
         peer_count = len(node.peer_list)
         print(f"Node {i + 1} (Port {node.tcp_port}): {peer_count} connected peer(s)")
 
-    print("Stopping all nodes")
+    print("Stopping all nodes" + "\n" + PRINT_LINE)
     for node in nodes:
         node.stop()
 

@@ -59,7 +59,6 @@ class p2p_node:
 
         udp_socket.sendto(encode(msg), ('<broadcast>', UDP_PORT))
 
-        # Might want to check this. This feels very hacky.
         start_time = time.time()
         while time.time() - start_time < 1.5:
             try:
@@ -88,10 +87,19 @@ class p2p_node:
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         udp_socket.bind(("", UDP_PORT))
+        udp_socket.settimeout(1.0)
 
         while self.running:
             try:
                 data, addr = udp_socket.recvfrom(4096)
+            except socket.timeout: # Re-check self.running
+                continue
+            except OSError:
+                break
+
+            # If we received PEER_REQ, send the back the tcp_port for the peer to connect to.
+            # Ignores all self-broadcasts.
+            try:
                 msg = decode(data)
                 print(f"Node {self.id} received message: {msg}")
 
@@ -105,9 +113,8 @@ class p2p_node:
                     udp_socket.sendto(encode(ack_msg), addr)
             except MessageError as e:
                 print(f"Node {self.id} ignored invalid UDP message from {addr[0]}: {e}")
-            except Exception:
-                if not self.running: 
-                    break
+            except Exception as e:
+                print(f"Node {self.id} encountered a UDP Listener error: {e}")
 
         udp_socket.close()
 
@@ -121,38 +128,52 @@ class p2p_node:
         tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         tcp_socket.bind(("", self.tcp_port))
         tcp_socket.listen(5)
+        tcp_socket.settimeout(1.0)
         print(f"Listening for connections at port: {self.tcp_port}")
 
         while self.running:
             try:
                 conn, addr = tcp_socket.accept()
+            except socket.timeout: # Re-check self.running
+                continue 
+            except OSError:
+                break     
 
-                try:
-                    msg = decode(recv_msg(conn))
-                except (MessageError, ConnectionError, OSError) as e:
-                    print(f"Node {self.id} rejected connection from {addr[0]}: {e}")
-                    conn.close()
-                    continue
+            try:
+                msg = decode(recv_msg(conn))
+            except (MessageError, ConnectionError, OSError) as e:
+                print(f"Node {self.id} rejected connection from {addr[0]}: {e}")
+                conn.close()
+                continue                
 
-                if msg[TYPE] != IDENT:
-                    print(f"Node {self.id} rejected connection from {addr[0]}: expected IDENT, got {msg[TYPE]}")
-                    conn.close()
-                    continue
+            if msg[TYPE] != IDENT:
+                print(f"Node {self.id} rejected connection from {addr[0]}: expected IDENT, got {msg[TYPE]}")
+                conn.close()
+                continue
 
-                peer_id = msg[ID]
+            peer_id = msg[ID]
 
-                if not peer_id or peer_id == self.id or peer_id in self.peer_list:
-                    conn.close()
-                    continue # Kinda hacky. Will need to take a look later. Could possibly replace an existing connection.
+            #If peer does not exist or we somehow connected to ourselves, close the connection.
+            if not peer_id or peer_id == self.id:
+                conn.close()
+                continue
 
-                with self.lock:
+            with self.lock:
+                # Check if peer is already in the node's peer list.
+                if peer_id in self.peer_list:
+                    dup = True
+                else:
                     self.peer_list[peer_id] = conn
+                    dup = False
 
-                client_thread = threading.Thread(target=self.peer_receiver, args=(conn, peer_id), daemon=True)
-                client_thread.start()
-            except Exception:
-                if not self.running: 
-                    break
+            # Close the uneeded connection.
+            if dup:
+                conn.close()
+                continue
+
+            # Otherwise, start up the peer_receiver method.
+            client_thread = threading.Thread(target=self.peer_receiver, args=(conn, peer_id), daemon=True)
+            client_thread.start()    
 
         tcp_socket.close()
 
@@ -162,27 +183,39 @@ class p2p_node:
         Also creates a new client thread to prevent blocking.
     """
     def connect_to_peer(self, peer_id, ip, port):
+        # Do not connect to itself.
         if peer_id == self.id:
             return False
 
         with self.lock:
+            # If peer is in the node's list, don't connect.
             if peer_id in self.peer_list:
                 return False
 
+        sock = None
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((ip, port))
-
             send_msg(sock, encode(make_ident(self.id)))
-
-            with self.lock:
-                self.peer_list[peer_id] = sock
-
-            client_conn_thread = threading.Thread(target=self.peer_receiver, args=(sock, peer_id), daemon=True)
-            client_conn_thread.start()
-
         except Exception as e:
             print(f"Failed to connect to {peer_id}: {e}")
+
+            # Closes stale socket.
+            if sock:
+                sock.close()
+            return False
+
+        with self.lock:
+            # If somehow the peer that is already in a node's peer list connects, close the connection.
+            if peer_id in self.peer_list:
+                sock.close()
+                return False
+            # Otherwise, add the peer to the node's socket list and start up the peer_receiver method.
+            self.peer_list[peer_id] = sock
+
+        client_conn_thread = threading.Thread(target=self.peer_receiver, args=(sock, peer_id), daemon=True)
+        client_conn_thread.start()
+        return True
 
     """
         Get peer_id and sends message to specified peer_id.
@@ -203,7 +236,7 @@ class p2p_node:
             print(f"Failed to send message to {peer_id}: {e}")
             return False
         except Exception:
-            self.handle_disconnect(peer_id)
+            self.handle_disconnect(peer_id, sock)
             return False
 
     """
@@ -216,7 +249,8 @@ class p2p_node:
                 msg_dict = decode(recv_msg(sock))
                 self.on_message_received(peer_id, msg_dict)
             except (ConnectionError, OSError):
-                self.handle_disconnect(peer_id)
+                if self.running:
+                    self.handle_disconnect(peer_id, sock)
                 break
             except MessageError as e:
                 print(f"Ignored invalid message from {peer_id}: {e}")
@@ -224,26 +258,33 @@ class p2p_node:
                 print(f"Failed to parse message from {peer_id}: {e}")
 
     """
-        Pops peer_id from list of peer sockets it is connected to.
-        Closes the specified peer_id socket.
+        Deletes peer_id from list of peer sockets it is connected to and then closes the specified peer_id socket.
     """
-    def handle_disconnect(self, peer_id):
+    def handle_disconnect(self, peer_id, sock):
         with self.lock:
-            sock = self.peer_list.pop(peer_id, None)
-            if sock:
-                try:
-                    sock.close()
-                except Exception:
-                    pass
-            self.on_peer_disconnected(peer_id)
+            if self.peer_list.get(peer_id) is not sock:
+                return
+            del self.peer_list[peer_id]
+        try:
+            sock.close()
+        except Exception:
+            pass
+
+        self.on_peer_disconnected(peer_id)
 
     """
         Handles closing the connection of this node.
+        Clears the peer list and close all of this node's connections.
     """
     def stop(self):
         self.running = False
         with self.lock:
-            for sock in self.peer_list.values():
-                sock.close()
-        self.peer_list.clear()
+            socks = list(self.peer_list.values())
+            self.peer_list.clear()
+
+        for sock in socks:
+            sock.close()
+
+        self.server.join(timeout=2) # Waits for listener threads to exit.
+        self.listener.join(timeout=2)
             
