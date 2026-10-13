@@ -6,11 +6,12 @@ from typing import Callable, Dict
 from msg_frame import send_msg, recv_msg
 from messages import (
     MessageError, encode, decode,
-    make_peer_req, make_peer_ack, make_ident,
+    make_peer_req, make_peer_ack, make_ident, make_file_list,
     TYPE, ID, TARGET_PORT, PEER_REQ, PEER_ACK, IDENT
 )
 
 UDP_PORT = 54321 # Set default UDP port for all nodes to listen to.
+FILE_LIST_INTERVAL = 10 # Seconds between periodic FILE_LIST sends to every peer.
 
 class p2p_node:
     """
@@ -21,27 +22,40 @@ class p2p_node:
         running - Tracks if node is running or not.
         on_message_received (May not be needed or could be replaced) - Calls function upon message received. 
         on_peer_disconnected (May not be needed or could be replaced) - Calls function upon peer disconnection.
+        get_file_list - Returns the filenames this node shares (e.g. FileManager.scan_shared).
+        file_list_interval - Seconds between periodic FILE_LIST sends.
+        send_locks - One lock per peer socket, so messages from different threads are never interleaved.
+        stop_event - Set by stop() to wake the file list timer immediately.
     """    
-    def __init__(self, tcp_port, on_message_received: Callable, on_peer_disconnected: Callable):
+    def __init__(self, tcp_port, on_message_received: Callable, on_peer_disconnected: Callable,
+                 get_file_list: Callable = lambda: [], file_list_interval=FILE_LIST_INTERVAL):
         self.id = str(uuid.uuid4())
         self.tcp_port = tcp_port
         self.on_message_received = on_message_received
         self.on_peer_disconnected = on_peer_disconnected
+        self.get_file_list = get_file_list
+        self.file_list_interval = file_list_interval
         self.peer_list: Dict[str, socket.socket] = {} 
+        self.send_locks: Dict[socket.socket, threading.Lock] = {}
         self.lock = threading.Lock()
         self.running = False 
+        self.stop_event = threading.Event()
 
     """
-        Starts up the TCP server and UDP Listener.
+        Starts up the TCP server, UDP Listener, and file list timer.
     """
     def start(self):
         self.running = True 
+        self.stop_event.clear()
 
         self.server = threading.Thread(target=self.tcp_server, daemon=True)
         self.server.start()
 
         self.listener = threading.Thread(target=self.udp_listener, daemon=True)
         self.listener.start()
+
+        self.file_list_timer_thread = threading.Thread(target=self.file_list_timer, daemon=True)
+        self.file_list_timer_thread.start()
 
     """
         Broadcast Peer Request
@@ -175,6 +189,9 @@ class p2p_node:
             client_thread = threading.Thread(target=self.peer_receiver, args=(conn, peer_id), daemon=True)
             client_thread.start()    
 
+            # Send our file list to the new peer right away instead of waiting for the next timer tick.
+            self.send_file_list(peer_id)
+
         tcp_socket.close()
 
     """
@@ -215,6 +232,9 @@ class p2p_node:
 
         client_conn_thread = threading.Thread(target=self.peer_receiver, args=(sock, peer_id), daemon=True)
         client_conn_thread.start()
+
+        # Send our file list to the new peer right away instead of waiting for the next timer tick.
+        self.send_file_list(peer_id)
         return True
 
     """
@@ -224,12 +244,14 @@ class p2p_node:
     def send_message(self, peer_id, msg_dict):
         with self.lock:
             sock = self.peer_list.get(peer_id)
-
-        if not sock:
-            return False
+            if not sock:
+                return False
+            send_lock = self.send_locks.setdefault(sock, threading.Lock())
 
         try:
-            send_msg(sock, encode(msg_dict))
+            # Only one thread may write to a socket at a time, or two messages' bytes could interleave.
+            with send_lock:
+                send_msg(sock, encode(msg_dict))
             return True
         except ValueError as e:
             # Message too large to send. The connection itself is fine, so keep the peer.
@@ -238,6 +260,47 @@ class p2p_node:
         except Exception:
             self.handle_disconnect(peer_id, sock)
             return False
+
+    """
+        Sends this node's current file list to one peer.
+        Used right after a new connection is established.
+    """
+    def send_file_list(self, peer_id):
+        try:
+            file_names = self.get_file_list()
+        except Exception as e:
+            print(f"Node {self.id} could not get file list: {e}")
+            return False
+
+        return self.send_message(peer_id, make_file_list(self.id, file_names))
+
+    """
+        Sends this node's current file list to every connected peer.
+        The file list is read once and the same message is sent to all peers.
+    """
+    def broadcast_file_list(self):
+        try:
+            file_names = self.get_file_list()
+        except Exception as e:
+            print(f"Node {self.id} could not get file list: {e}")
+            return
+
+        msg = make_file_list(self.id, file_names)
+
+        # Copy the peer ids so peers connecting or disconnecting during the loop don't affect it.
+        with self.lock:
+            peer_ids = list(self.peer_list.keys())
+
+        for peer_id in peer_ids:
+            self.send_message(peer_id, msg)
+
+    """
+        Sends the file list to every peer every file_list_interval seconds until stop() is called.
+        stop_event.wait returns early when stop() sets the event, so shutdown does not wait out the interval.
+    """
+    def file_list_timer(self):
+        while not self.stop_event.wait(self.file_list_interval):
+            self.broadcast_file_list()
 
     """
         Handles and parses message received from peers.
@@ -265,6 +328,7 @@ class p2p_node:
             if self.peer_list.get(peer_id) is not sock:
                 return
             del self.peer_list[peer_id]
+            self.send_locks.pop(sock, None)
         try:
             sock.close()
         except Exception:
@@ -278,13 +342,16 @@ class p2p_node:
     """
     def stop(self):
         self.running = False
+        self.stop_event.set()
         with self.lock:
             socks = list(self.peer_list.values())
             self.peer_list.clear()
+            self.send_locks.clear()
 
         for sock in socks:
             sock.close()
 
         self.server.join(timeout=2) # Waits for listener threads to exit.
         self.listener.join(timeout=2)
+        self.file_list_timer_thread.join(timeout=2)
             

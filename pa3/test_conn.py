@@ -51,7 +51,8 @@ def run_test():
     print(f"Send status: {success}")
     time.sleep(1)
 
-    if len(node2_recv) and node2_recv[0][1][FILE_LIST_FIELD] == ["hello_from_node1.txt"]:
+    # Search all received messages, since the automatic FILE_LIST sent on connect arrives first.
+    if any(msg[FILE_LIST_FIELD] == ["hello_from_node1.txt"] for _, msg in node2_recv):
         print("Test passed: Message delivered and framed correctly!")
     else:
         print("Test failed: Message was not received properly.")
