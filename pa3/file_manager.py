@@ -16,7 +16,6 @@ class FileManager:
         Returns a list of filenames (strings) currently available to share.
         """
         shared_file_path = os.path.join(os.getcwd(), self.shared_dir)
-        # return [f for f in os.listdir(shared_file_path) if not f.startswith(".") and os.path.isfile(os.path.join(shared_file_path, f))]
         return os.listdir(shared_file_path)
 
     def read_and_encode(self, filename):

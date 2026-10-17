@@ -25,7 +25,13 @@ class Logger():
                 file.write(log_entry + "\n")
             
             if self.echo_stdout:
-                print(log_entry)
+                # \x1b[s - Saves the current cursor position
+                # \x1b[1A - Move cursor by one line
+                # \x1b[999D - Move cursor to beginning of the line
+                # \x1b[1S - Scroll up window by 1 line
+                # \x1b[L - Add new line
+                # \x1b[u - Return back to saved cursor position
+                print("\x1b[s\x1b[1A\x1b[999D\x1b[1S\x1b[L"+log_entry+"\x1b[u", end="",flush=True)
 
     def log_message(self, direction, peer_id, msg_type):
         """

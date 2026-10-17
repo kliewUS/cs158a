@@ -47,14 +47,14 @@ class p2p_node:
         self.logger = logger
 
     """
-    If logger is setup, then log all receiving and sent messages to this node.
+    If logger has been setup, then log all receiving and sent messages to this node.
     """
     def _log(self, direction, addr, msg_type):
         if self.logger:
             self.logger.log_message(direction, addr, msg_type)
 
     """
-    If logger is setup, then log all successful connections and peer removals.
+    If logger has been setup, then log all successful connections and peer removals.
     """
     def _log_peer(self, action, addr):
         if self.logger:
