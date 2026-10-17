@@ -9,6 +9,7 @@ from messages import (
     make_peer_req, make_peer_ack, make_ident, make_file_list,
     TYPE, ID, TARGET_PORT, PEER_REQ, PEER_ACK, IDENT
 )
+from logger import Logger
 
 UDP_PORT = 54321 # Set default UDP port for all nodes to listen to.
 FILE_LIST_INTERVAL = 10 # Seconds between periodic FILE_LIST sends to every peer.
@@ -28,7 +29,7 @@ class p2p_node:
         stop_event - Set by stop() to wake the file list timer immediately.
     """    
     def __init__(self, tcp_port, on_message_received: Callable, on_peer_disconnected: Callable,
-                 get_file_list: Callable = lambda: [], file_list_interval=FILE_LIST_INTERVAL):
+                 logger: Logger = None, get_file_list: Callable = lambda: [], file_list_interval=FILE_LIST_INTERVAL, ):
         self.id = str(uuid.uuid4())
         self.tcp_port = tcp_port
         self.on_message_received = on_message_received
@@ -36,10 +37,20 @@ class p2p_node:
         self.get_file_list = get_file_list
         self.file_list_interval = file_list_interval
         self.peer_list: Dict[str, socket.socket] = {} 
+        self.peer_addrs: Dict[str, str] = {}
         self.send_locks: Dict[socket.socket, threading.Lock] = {}
         self.lock = threading.Lock()
         self.running = False 
         self.stop_event = threading.Event()
+        self.logger = logger
+
+    def _log(self, direction, addr, msg_type):
+        if self.logger:
+            self.logger.log_message(direction, addr, msg_type)
+
+    def _log_peer(self, action, addr):
+        if self.logger:
+            self.logger.log_peer_event(action, addr)
 
     """
         Starts up the TCP server, UDP Listener, and file list timer.
@@ -72,6 +83,7 @@ class p2p_node:
         print(f"Node {self.id} sent message: {msg}") 
 
         udp_socket.sendto(encode(msg), ('<broadcast>', UDP_PORT))
+        self._log("SENT", f"broadcast:{UDP_PORT}", PEER_REQ)
 
         start_time = time.time()
         while time.time() - start_time < 1.5:
@@ -80,6 +92,7 @@ class p2p_node:
                 ack_msg = decode(ack_data)
 
                 if ack_msg[TYPE] == PEER_ACK:
+                    self._log("RECEIVED", f"{addr[0]}:{addr[1]}", PEER_ACK)
                     tcp_port = ack_msg[TARGET_PORT]
                     print(f"Node {self.id} received Message Type: {ack_msg[TYPE]} and connecting to {addr[0]} with tcp_port: {tcp_port}")
                     self.connect_to_peer(ack_msg[ID], addr[0], tcp_port)
@@ -122,9 +135,11 @@ class p2p_node:
                     continue
 
                 if msg[TYPE] == PEER_REQ:
+                    self._log("RECEIVED", f"{addr[0]}:{addr[1]}", PEER_REQ)
                     ack_msg = make_peer_ack(self.id, self.tcp_port)
                     print(f"Node {self.id} received Message Type: {msg[TYPE]} and sending it to {addr[0]} with tcp_port: {self.tcp_port}")
                     udp_socket.sendto(encode(ack_msg), addr)
+                    self._log("SENT", f"{addr[0]}:{addr[1]}", PEER_ACK)
             except MessageError as e:
                 print(f"Node {self.id} ignored invalid UDP message from {addr[0]}: {e}")
             except Exception as e:
@@ -166,6 +181,8 @@ class p2p_node:
                 continue
 
             peer_id = msg[ID]
+            peer_addr = f"{addr[0]}:{addr[1]}"
+            self._log("RECEIVED", peer_addr, msg[TYPE])
 
             #If peer does not exist or we somehow connected to ourselves, close the connection.
             if not peer_id or peer_id == self.id:
@@ -178,12 +195,15 @@ class p2p_node:
                     dup = True
                 else:
                     self.peer_list[peer_id] = conn
+                    self.peer_addrs[peer_id] = peer_addr
                     dup = False
 
             # Close the uneeded connection.
             if dup:
                 conn.close()
                 continue
+
+            self._log_peer("ADDED", peer_addr)
 
             # Otherwise, start up the peer_receiver method.
             client_thread = threading.Thread(target=self.peer_receiver, args=(conn, peer_id), daemon=True)
@@ -214,6 +234,7 @@ class p2p_node:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((ip, port))
             send_msg(sock, encode(make_ident(self.id)))
+            self._log("SENT", f"{ip}:{port}", IDENT)
         except Exception as e:
             print(f"Failed to connect to {peer_id}: {e}")
 
@@ -229,6 +250,9 @@ class p2p_node:
                 return False
             # Otherwise, add the peer to the node's socket list and start up the peer_receiver method.
             self.peer_list[peer_id] = sock
+            self.peer_addrs[peer_id] = f"{ip}:{port}"
+
+            self._log_peer("ADDED", f"{ip}:{port}")
 
         client_conn_thread = threading.Thread(target=self.peer_receiver, args=(sock, peer_id), daemon=True)
         client_conn_thread.start()
@@ -244,6 +268,7 @@ class p2p_node:
     def send_message(self, peer_id, msg_dict):
         with self.lock:
             sock = self.peer_list.get(peer_id)
+            addr = self.peer_addrs.get(peer_id, peer_id)
             if not sock:
                 return False
             send_lock = self.send_locks.setdefault(sock, threading.Lock())
@@ -252,6 +277,7 @@ class p2p_node:
             # Only one thread may write to a socket at a time, or two messages' bytes could interleave.
             with send_lock:
                 send_msg(sock, encode(msg_dict))
+            self._log("SENT", addr, msg_dict[TYPE])
             return True
         except ValueError as e:
             # Message too large to send. The connection itself is fine, so keep the peer.
@@ -307,9 +333,12 @@ class p2p_node:
         Invalid messages are skipped; the connection stays open.
     """
     def peer_receiver(self, sock, peer_id):
+        with self.lock:
+            addr = self.peer_addrs.get(peer_id, peer_id)
         while self.running:
             try:
                 msg_dict = decode(recv_msg(sock))
+                self._log("RECEIVED", addr, msg_dict[TYPE])
                 self.on_message_received(peer_id, msg_dict)
             except (ConnectionError, OSError):
                 if self.running:
@@ -328,12 +357,13 @@ class p2p_node:
             if self.peer_list.get(peer_id) is not sock:
                 return
             del self.peer_list[peer_id]
+            addr = self.peer_addrs.pop(peer_id, peer_id)
             self.send_locks.pop(sock, None)
         try:
             sock.close()
         except Exception:
             pass
-
+        self._log_peer("REMOVED", addr)
         self.on_peer_disconnected(peer_id)
 
     """
@@ -345,6 +375,7 @@ class p2p_node:
         self.stop_event.set()
         with self.lock:
             socks = list(self.peer_list.values())
+            self.peer_addrs.clear()
             self.peer_list.clear()
             self.send_locks.clear()
 
