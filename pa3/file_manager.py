@@ -16,11 +16,12 @@ class FileManager:
         Returns a list of filenames (strings) currently available to share.
         """
         shared_file_path = os.path.join(os.getcwd(), self.shared_dir)
-        return [f for f in os.listdir(shared_file_path) if not f.startswith(".") and os.path.isfile(os.path.join(shared_file_path, f))]
-        # return os.listdir(shared_file_path)
+        # return [f for f in os.listdir(shared_file_path) if not f.startswith(".") and os.path.isfile(os.path.join(shared_file_path, f))]
+        return os.listdir(shared_file_path)
 
     def read_and_encode(self, filename):
         """
+        First, checks if a file was provided. If not, this means a path was provided, so ignore it.
         Reads a file from the shared directory and converts it to Base64 text.
         Returns the Base64 string, or None if the file doesn't exist.
         """
@@ -39,13 +40,17 @@ class FileManager:
             return None
         
         return base64_string
-        
+    
     def decode_and_save(self, filename, base64_string):
+        """
+        First, checks if a file was provided. If not, this means a path was provided, so ignore it.
+        Decodes base64 string back into bytes and saves into the download folder.
+        Then copies the file into the node's shared folder.
+        """
         name = os.path.basename(filename)
 
         if name != filename or not name:
             return None
-
 
         download_path = os.path.join(os.getcwd(), self.downloads_dir, filename)
         shared_path = os.path.join(os.getcwd(), self.shared_dir, filename)
@@ -59,14 +64,3 @@ class FileManager:
         shutil.copy(download_path, tmp)
         
         os.replace(tmp, shared_path) 
-
-# if __name__ == "__main__":
-#     fm = FileManager()
-#     files = fm.scan_shared()
-#     print("Files available:", files)
-
-#     file_encoded = fm.read_and_encode(files[0])
-#     print("File base64 encoding:", file_encoded)
-
-#     test_filename = "copy_of_" + files[0]
-#     fm.decode_and_save(test_filename, file_encoded)

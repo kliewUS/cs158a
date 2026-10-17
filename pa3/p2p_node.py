@@ -18,15 +18,17 @@ class p2p_node:
     """
         uuid - UUID of the current node.
         tcp_port - Current node's tcp port for client nodes to connect to.
-        peer_list = List of peer_ids to connect.
+        peer_list = List of peer_ids in UUID.
+        peer_addrs = Lists of peer_addresses.
         lock - Acquires lock for this node
         running - Tracks if node is running or not.
-        on_message_received (May not be needed or could be replaced) - Calls function upon message received. 
-        on_peer_disconnected (May not be needed or could be replaced) - Calls function upon peer disconnection.
+        on_message_received - Calls function upon message received. 
+        on_peer_disconnected - Calls function upon peer disconnection.
         get_file_list - Returns the filenames this node shares (e.g. FileManager.scan_shared).
         file_list_interval - Seconds between periodic FILE_LIST sends.
         send_locks - One lock per peer socket, so messages from different threads are never interleaved.
         stop_event - Set by stop() to wake the file list timer immediately.
+        logger - Logs any messages received or sent, the peer address, and message type. Also logs successful connections and peer removals.
     """    
     def __init__(self, tcp_port, on_message_received: Callable, on_peer_disconnected: Callable,
                  logger: Logger = None, get_file_list: Callable = lambda: [], file_list_interval=FILE_LIST_INTERVAL, ):
@@ -44,10 +46,16 @@ class p2p_node:
         self.stop_event = threading.Event()
         self.logger = logger
 
+    """
+    If logger is setup, then log all receiving and sent messages to this node.
+    """
     def _log(self, direction, addr, msg_type):
         if self.logger:
             self.logger.log_message(direction, addr, msg_type)
 
+    """
+    If logger is setup, then log all successful connections and peer removals.
+    """
     def _log_peer(self, action, addr):
         if self.logger:
             self.logger.log_peer_event(action, addr)
@@ -382,7 +390,8 @@ class p2p_node:
         for sock in socks:
             sock.close()
 
-        self.server.join(timeout=2) # Waits for listener threads to exit.
+        # Waits for listener threads to exit.
+        self.server.join(timeout=2) 
         self.listener.join(timeout=2)
         self.file_list_timer_thread.join(timeout=2)
             

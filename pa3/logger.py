@@ -2,6 +2,11 @@ from datetime import datetime
 import threading
 
 class Logger():
+    """
+    log_file_path - Path to save log file.
+    echo_stdout - Toggle to print to terminal or not.
+    lock - lock - Acquires lock for the node using the logger.
+    """
     def __init__(self, log_file_path="log.txt", echo_stdout=True):
         self.log_file_path = log_file_path
         self.echo_stdout = echo_stdout
@@ -37,9 +42,3 @@ class Logger():
         """
         log_text = f"PEER {action}: {peer_id}"
         self._write_log(log_text)
-
-
-# if __name__ == "__main__":
-#     my_logger = Logger()
-#     my_logger.log_peer_event("CONNECTED", "1")
-#     my_logger.log_message("RECEIVED", "2", "FILE_LIST")
