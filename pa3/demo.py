@@ -11,7 +11,6 @@ from messages import (MessageRouter,
                       )
 from p2p_node import p2p_node
 
-
 """
     Registers handlers using MessageRouter to route receiver message to the designated handler.
 """
@@ -107,11 +106,11 @@ if __name__ == "__main__":
             # Returns a list of connected peers as UUIDs.
             elif cmd[0] == "peers":
                 for pid in node.peer_list.keys():
-                    print(f"{pid}")
+                    print(f"{pid} - ({node.peer_addrs[pid]})")
             # Returns a list of available files from each connected peer.
             elif cmd[0] == "files":
                 for pid, files in ftm.get_all_available_files().items():
-                    print(f"{pid}: {files}")
+                    print(f"{pid} - ({node.peer_addrs[pid]}): {files}")
             # Terminates the node.
             elif cmd[0] == "quit":
                 node.stop()

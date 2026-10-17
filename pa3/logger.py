@@ -31,7 +31,8 @@ class Logger():
                 # \x1b[1S - Scroll up window by 1 line
                 # \x1b[L - Add new line
                 # \x1b[u - Return back to saved cursor position
-                print("\x1b[s\x1b[1A\x1b[999D\x1b[1S\x1b[L"+log_entry+"\x1b[u", end="",flush=True)
+                # print("\x1b[s\x1b[1A\x1b[999D\x1b[1S\x1b[L"+log_entry+"\x1b[u", end="",flush=True)
+                print(log_entry)
 
     def log_message(self, direction, peer_id, msg_type):
         """

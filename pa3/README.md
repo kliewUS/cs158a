@@ -39,7 +39,73 @@ cd pa3
 python demo.py --port <port_number> --dir <file_dir>
 ```
 
+# Inital Node Shared Files:
+- Node 1 starts with test.txt
+- Node 2 starts with alice.txt
+- Node 3 starts with bob.txt
+- Node 4 starts with cat.jpg
+- Node 5 starts with charlie.txt
+
+
 # Execution examples
+### 3rd - 5th terminal executions examples are similar to the first two terminals, simply increment the port and node number by 1 per terminal when starting the nodes.
 
+## 1st terminal:
+```bash
+python demo.py --port 6001 --dir node1
+Listening for connections at port: 6001
+Node 390d2571-6ca4-4214-80cd-e0eb428528ca sent message: {'id': '390d2571-6ca4-4214-80cd-e0eb428528ca', 'type': 'PEER_REQ'}
+Node 390d2571-6ca4-4214-80cd-e0eb428528ca received message: {'id': '390d2571-6ca4-4214-80cd-e0eb428528ca', 'type': 'PEER_REQ'}
+Node 390d2571-6ca4-4214-80cd-e0eb428528ca ignores self-broadcast.
+2026-10-17 12:25:26.308290 SENT: [Type: PEER_REQ] | Peer: broadcast:54321
+> Node 390d2571-6ca4-4214-80cd-e0eb428528ca received message: {'id': '9b26cb4c-2635-4295-89d7-57077306c758', 'type': 'PEER_REQ'}
+2026-10-17 12:25:27.840971 RECEIVED: [Type: PEER_REQ] | Peer: 10.0.0.175:49843
+Node 390d2571-6ca4-4214-80cd-e0eb428528ca received Message Type: PEER_REQ and sending it to 10.0.0.175 with tcp_port: 6001
+2026-10-17 12:25:27.841163 SENT: [Type: PEER_ACK] | Peer: 10.0.0.175:49843
+2026-10-17 12:25:27.841965 RECEIVED: [Type: IDENT] | Peer: 10.0.0.175:61277
+2026-10-17 12:25:27.842087 PEER ADDED: 10.0.0.175:61277
+2026-10-17 12:25:27.842497 RECEIVED: [Type: FILE_LIST] | Peer: 10.0.0.175:61277
+2026-10-17 12:25:27.842659 SENT: [Type: FILE_LIST] | Peer: 10.0.0.175:61277
+get alice.txt
+2026-10-17 12:25:31.396369 SENT: [Type: DATA_REQ] | Peer: 10.0.0.175:61277
+> 2026-10-17 12:25:31.397939 RECEIVED: [Type: FILE_DATA] | Peer: 10.0.0.175:61277
+Successfully downloaded alice.txt
+2026-10-17 12:25:35.809906 SENT: [Type: FILE_LIST] | Peer: 10.0.0.175:61277
+2026-10-17 12:25:37.341631 RECEIVED: [Type: FILE_LIST] | Peer: 10.0.0.175:61277
+peers
+9b26cb4c-2635-4295-89d7-57077306c758 : 10.0.0.175:61277
+> 2026-10-17 12:25:45.814009 SENT: [Type: FILE_LIST] | Peer: 10.0.0.175:61277
+2026-10-17 12:25:47.344765 RECEIVED: [Type: FILE_LIST] | Peer: 10.0.0.175:61277
+files
+9b26cb4c-2635-4295-89d7-57077306c758: ['alice.txt']
+> 2026-10-17 12:25:55.816150 SENT: [Type: FILE_LIST] | Peer: 10.0.0.175:61277
+2026-10-17 12:25:57.351508 RECEIVED: [Type: FILE_LIST] | Peer: 10.0.0.175:61277
+quit
+```
 
+## 2nd terminal:
+```bash
+python demo.py --port 6002 --dir node2
+Listening for connections at port: 6002
+Node 9b26cb4c-2635-4295-89d7-57077306c758 sent message: {'id': '9b26cb4c-2635-4295-89d7-57077306c758', 'type': 'PEER_REQ'}
+Node 9b26cb4c-2635-4295-89d7-57077306c758 received message: {'id': '9b26cb4c-2635-4295-89d7-57077306c758', 'type': 'PEER_REQ'}
+Node 9b26cb4c-2635-4295-89d7-57077306c758 ignores self-broadcast.
+2026-10-17 12:25:27.840619 SENT: [Type: PEER_REQ] | Peer: broadcast:54321
+2026-10-17 12:25:27.841290 RECEIVED: [Type: PEER_ACK] | Peer: 10.0.0.175:54321
+Node 9b26cb4c-2635-4295-89d7-57077306c758 received Message Type: PEER_ACK and connecting to 10.0.0.175 with tcp_port: 6001
+2026-10-17 12:25:27.841862 SENT: [Type: IDENT] | Peer: 10.0.0.175:6001
+2026-10-17 12:25:27.841949 PEER ADDED: 10.0.0.175:6001
+2026-10-17 12:25:27.842335 SENT: [Type: FILE_LIST] | Peer: 10.0.0.175:6001
+2026-10-17 12:25:27.842689 RECEIVED: [Type: FILE_LIST] | Peer: 10.0.0.175:6001
+> 2026-10-17 12:25:31.396603 RECEIVED: [Type: DATA_REQ] | Peer: 10.0.0.175:6001
+2026-10-17 12:25:31.397787 SENT: [Type: FILE_DATA] | Peer: 10.0.0.175:6001
+2026-10-17 12:25:35.810241 RECEIVED: [Type: FILE_LIST] | Peer: 10.0.0.175:6001
+2026-10-17 12:25:37.341311 SENT: [Type: FILE_LIST] | Peer: 10.0.0.175:6001
+2026-10-17 12:25:45.814335 RECEIVED: [Type: FILE_LIST] | Peer: 10.0.0.175:6001
+2026-10-17 12:25:47.344530 SENT: [Type: FILE_LIST] | Peer: 10.0.0.175:6001
+2026-10-17 12:25:55.816515 RECEIVED: [Type: FILE_LIST] | Peer: 10.0.0.175:6001
+2026-10-17 12:25:57.351239 SENT: [Type: FILE_LIST] | Peer: 10.0.0.175:6001
+2026-10-17 12:26:02.696960 PEER REMOVED: 10.0.0.175:6001
+quit
+```
 
